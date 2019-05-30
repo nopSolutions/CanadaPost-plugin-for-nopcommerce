@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using Nop.Core;
 using Nop.Core.Domain.Shipping;
-using Nop.Core.Plugins;
+using Nop.Services.Plugins;
 using Nop.Services.Configuration;
 using Nop.Services.Directory;
 using Nop.Services.Localization;
@@ -90,6 +90,10 @@ namespace Nop.Plugin.Shipping.CanadaPost
 
             weight = _shippingService.GetTotalWeight(getShippingOptionRequest, ignoreFreeShippedItems: true);
             weight = _measureService.ConvertFromPrimaryMeasureWeight(weight, usedMeasureWeight);
+
+            // Empty weight 0.000 is invalid with Canada Post. Need to be a positive number.
+            // We will default it to 0.001 to comply.
+            weight = (weight > 0M) ? weight : 0.001M;
         }
 
         /// <summary>
@@ -113,6 +117,12 @@ namespace Nop.Plugin.Shipping.CanadaPost
             length = Math.Round(_measureService.ConvertFromPrimaryMeasureDimension(dimensions[2], usedMeasureDimension) * 100, 1);
             width = Math.Round(_measureService.ConvertFromPrimaryMeasureDimension(dimensions[1], usedMeasureDimension) * 100, 1);
             height = Math.Round(_measureService.ConvertFromPrimaryMeasureDimension(dimensions[0], usedMeasureDimension) * 100, 1);
+
+            // Empty dimensions 0 is invalid with Canada Post. Need to be a positive number.
+            // We will default it to 1 to comply.
+            length = (length > 0M) ? length : 1M;
+            width = (width > 0M) ? width : 1M;
+            height = (height > 0M) ? height : 1M;
         }
 
         /// <summary>
@@ -324,8 +334,14 @@ namespace Nop.Plugin.Shipping.CanadaPost
             if (!string.IsNullOrEmpty(errorString))
                 _logger.Error(errorString);
             if (!result.ShippingOptions.Any())
+            {
                 result.AddError(errorString);
-
+            }
+            else
+            {
+                result.ShippingOptions = result.ShippingOptions.OrderBy(s => s.Rate).ToList();
+            }
+            
             return result;
         }
 

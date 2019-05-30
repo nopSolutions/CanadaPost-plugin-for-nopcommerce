@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Nop.Plugin.Shipping.CanadaPost.Models;
 using Nop.Services.Configuration;
 using Nop.Services.Localization;
+using Nop.Services.Messages;
 using Nop.Services.Security;
 using Nop.Web.Framework;
 using Nop.Web.Framework.Controllers;
@@ -21,6 +22,7 @@ namespace Nop.Plugin.Shipping.CanadaPost.Controllers
         private readonly ILocalizationService _localizationService;
         private readonly IPermissionService _permissionService;
         private readonly ISettingService _settingService;
+        private readonly INotificationService _notificationService;
 
         #endregion
 
@@ -29,12 +31,14 @@ namespace Nop.Plugin.Shipping.CanadaPost.Controllers
         public ShippingCanadaPostController(CanadaPostSettings canadaPostSettings,
             ILocalizationService localizationService,
             IPermissionService permissionService,
+            INotificationService notificationService,
             ISettingService settingService)
         {
             this._canadaPostSettings = canadaPostSettings;
             this._localizationService = localizationService;
             this._permissionService = permissionService;
-            this._settingService = settingService;            
+            this._settingService = settingService;
+            this._notificationService = notificationService;
         }
 
         #endregion
@@ -91,7 +95,7 @@ namespace Nop.Plugin.Shipping.CanadaPost.Controllers
             _canadaPostSettings.SelectedServicesCodes = model.SelectedServicesCodes.ToList();
             _settingService.SaveSetting(_canadaPostSettings);
 
-            SuccessNotification(_localizationService.GetResource("Admin.Plugins.Saved"));
+            _notificationService.SuccessNotification(_localizationService.GetResource("Admin.Plugins.Saved"));
 
             return Configure();
         }
